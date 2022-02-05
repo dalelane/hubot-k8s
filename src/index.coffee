@@ -44,11 +44,17 @@ module.exports = (@robot) ->
 
     url = "#{apiPrefix}/namespaces/#{namespace}/#{resource}"
     if res.match[2] and res.match[2] != ""
-      url += "?labelSelector=#{res.match[2].trim()}"
+      labelSelector = res.match[2].trim()
+      if labelSelector.startsWith("http://")
+        labelSelector = labelSelector.substring('http://'.length)
+      url += "?labelSelector=#{labelSelector}"
+
+    console.log(url)
 
     kubeapi = new KubeApi()
     kubeapi.get {path: url}, (err, response) ->
       if err
+        robot.logger.error url
         robot.logger.error err
         return res.send "Could not fetch *#{resource}* in namespace *#{namespace}*"
       return res.reply "Requested resource *#{resource}* with labelSelector *#{res.match[2]}* not found in namespace *#{namespace}*" unless response and response.items and response.items.length
