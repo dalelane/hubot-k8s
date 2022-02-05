@@ -6,29 +6,19 @@
 moment = require "moment"
 
 class Config
-  @contexts: JSON.parse process.env.HUBOT_K8S_CONTEXTS
-  @defaultContext = process.env.HUBOT_K8S_DEFAULT_CONTEXT
   @defaultNamespace = process.env.HUBOT_K8S_DEFAULT_NAMESPACE
 
   @resourceAliases =
     "deploy": "deployments"
     "po": "pods"
     "svc": "services"
+    "sts": "statefulsets"
 
   @resourceApiPrefix =
     "deployments": "/apis/extensions/v1beta1"
+    "statefulsets": "/apis/apps/v1"
     "jobs": "/apis/batch/v1"
     "cronjobs": "/apis/batch/v1beta1"
-
-  @getContext = (res) ->
-    user = res.message.user.id
-    key = "#{user}.context"
-    return robot.brain.get(key) or @defaultContext
-
-  @setContext = (res, context) ->
-    user = res.message.user.id
-    key = "#{user}.context"
-    return robot.brain.set(key, context or @defaultContext)
 
   @getNamespace = (res) ->
     user = res.message.user.id
@@ -45,14 +35,21 @@ class Config
       reply = ''
       for cronjob in response.items
         {metadata: {name, namespace}, spec: {schedule, suspend}, status: {lastScheduleTime}} = cronjob
-        reply += ">*<#{dashboardPrefix}/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/#!/cronjob/#{namespace}/#{name}?namespace=#{namespace}|#{name}>* - "
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/cronjobs/#{name}|#{name}>* - "
         reply += "schedule `#{schedule}` and suspended `#{suspend}` last scheduled `#{moment(lastScheduleTime).fromNow()}`\n"
       return reply
     'deployments': (response, dashboardPrefix) ->
       reply = ''
       for deployment in response.items
         {metadata: {name, namespace}, status: {replicas, updatedReplicas, readyReplicas, availableReplicas}} = deployment
-        reply += ">*<#{dashboardPrefix}/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/#!/deployment/#{namespace}/#{name}?namespace=#{namespace}|#{name}>* - "
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/deployments/#{name}|#{name}>* - "
+        reply += "desired `#{replicas}`, current `#{readyReplicas}`, updated `#{updatedReplicas}`, available `#{availableReplicas}`\n"
+      return reply
+    'statefulsets': (response, dashboardPrefix) ->
+      reply = ''
+      for statefulset in response.items
+        {metadata: {name, namespace}, status: {replicas, updatedReplicas, readyReplicas, availableReplicas}} = statefulset
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/statefulsets/#{name}|#{name}>* - "
         reply += "desired `#{replicas}`, current `#{readyReplicas}`, updated `#{updatedReplicas}`, available `#{availableReplicas}`\n"
       return reply
     'jobs': (response, dashboardPrefix) ->
@@ -62,7 +59,7 @@ class Config
         statuses = []
         for condition in conditions
           statuses.push condition.type
-        reply += ">*<#{dashboardPrefix}/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/#!/job/#{namespace}/#{name}?namespace=#{namespace}|#{name}>* - "
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/jobs/#{name}|#{name}>* - "
         reply += "last started `#{moment(startTime).fromNow()}` with status `#{statuses.join(" ")}`\n"
       return reply
     'pods': (response, dashboardPrefix) ->
@@ -77,7 +74,7 @@ class Config
           podRestartCount = podRestartCount + restartCount
           podCount = podCount + 1
           if ready then podReadyCount = podReadyCount + 1
-        reply += ">*<#{dashboardPrefix}/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/#!/pod/#{namespace}/#{name}?namespace=#{namespace}|#{name}>* - "
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/pods/#{name}|#{name}>* - "
         reply += "pods `#{podReadyCount}/#{podCount}` with status `#{phase}` and restart count `#{restartCount}` since `#{moment(startTime).fromNow()}`\n"
       return reply
     'services': (response, dashboardPrefix) ->
@@ -90,7 +87,7 @@ class Config
           {protocol, port, nodePort} = p
           internalPorts.push "#{port}/#{protocol}"
           nodePorts.push "#{nodePort}/#{protocol}"
-        reply += ">*<#{dashboardPrefix}/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/#!/service/#{namespace}/#{name}?namespace=#{namespace}|#{name}>* - "
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/services/#{name}|#{name}>* - "
         reply += "ports `#{internalPorts.join(" ")}` and node ports `#{nodePorts.join(" ")}` with cluster ip `#{clusterIP}`\n"
       return reply
 

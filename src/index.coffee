@@ -17,14 +17,6 @@ Config = require "./config"
 KubeApi = require "./kubeapi"
 
 module.exports = (@robot) ->
-  # get/set kubernetes context
-  robot.respond /k8s\s*context\s*(.+)?/i, (res) ->
-    context = res.match[1]
-    if not context or context is ""
-      return res.reply "Your current kubernetes context is: `#{Config.getContext(res)}`"
-    Config.setContext res, context
-    res.reply "Your current kubernetes context is changed to `#{context}`"
-
   # get/set kubernetes namespaces
   robot.respond /k8s\s*(namespace|ns)\s*(.+)?/i, (res) ->
     namespace = res.match[2]
@@ -33,9 +25,7 @@ module.exports = (@robot) ->
     Config.setNamespace res, namespace
     res.reply "Your current kubernetes namespace is changed to `#{namespace}`"
 
-  robot.respond /k8s\s*(deployments|deploy|pods|po|services|svc|cronjobs|jobs)\s*(.+)?/i, (res) ->
-    context = Config.getContext(res)
-    contextConfig = Config.contexts[context]
+  robot.respond /k8s\s*(deployments|deploy|statefulsets|sts|pods|po|services|svc|cronjobs|jobs)\s*(.+)?/i, (res) ->
     namespace = Config.getNamespace(res)
     resource = res.match[1]
     if alias = Config.resourceAliases[resource] then resource = alias
@@ -45,31 +35,29 @@ module.exports = (@robot) ->
     if res.match[2] and res.match[2] != ""
       url += "?labelSelector=#{res.match[2].trim()}"
 
-    kubeapi = new KubeApi(contextConfig)
+    kubeapi = new KubeApi()
     kubeapi.get {path: url}, (err, response) ->
       if err
         robot.logger.error err
-        return res.send "Could not fetch *#{resource}* in namespace *#{namespace}* with context *#{context}*"
-      return res.reply "Requested resource *#{resource}* with labelSelector *#{res.match[2]}* not found in namespace *#{namespace}* with context *#{context}*" unless response and response.items and response.items.length
+        return res.send "Could not fetch *#{resource}* in namespace *#{namespace}*"
+      return res.reply "Requested resource *#{resource}* with labelSelector *#{res.match[2]}* not found in namespace *#{namespace}*" unless response and response.items and response.items.length
       responseFormat = Config.responses[resource] or ->
-      reply = "Here is the list of *#{resource}* running in namespace *#{namespace}* with context *#{context}*\n"
-      reply += responseFormat(response, contextConfig.dashboardPrefix)
+      reply = "Here is the list of *#{resource}* running in namespace *#{namespace}*\n"
+      reply += responseFormat(response, process.env.HUBOT_K8S_CONSOLE)
       res.reply reply
 
   robot.respond /k8s\s*(logs|log)\s*(.+)?/i, (res) ->
-    context = Config.getContext(res)
-    contextConfig = Config.contexts[context]
     namespace = Config.getNamespace(res)
     pod = res.match[2]
 
     url = "/api/v1/namespaces/#{namespace}/pods/#{pod}/log"
-    kubeapi = new KubeApi(contextConfig)
+    kubeapi = new KubeApi()
     kubeapi.get {path: url}, (err, response) ->
       if err
         robot.logger.error err
-        return res.send "Could not fetch logs for pod *#{pod}* in namespace *#{namespace}* with context *#{context}*"
-      return res.reply "Requested *logs* not found for pod *#{pod}* in namespace *#{namespace}* with context *#{context}*" unless response
-      reply = "Here are latest logs from pod *#{pod}* in namespace *#{namespace}* with context *#{context}*\n"
-      reply += "#{response}\n"
+        return res.send "Could not fetch logs for pod *#{pod}* in namespace *#{namespace}*"
+      return res.reply "Requested *logs* not found for pod *#{pod}* in namespace *#{namespace}*" unless response
+      reply = "Here are latest logs from pod *#{pod}* in namespace *#{namespace}*\n"
+      reply += "```#{response}```\n"
 
       res.reply reply

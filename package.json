@@ -1,8 +1,8 @@
 {
-  "name": "hubot-k8s",
-  "description": "A hubot script for interacting with kubernetes",
-  "version": "0.1.0",
-  "author": "Kevin Schmidt <kevin@kevinschmidt.biz>",
+  "name": "hubot-k8s-local",
+  "description": "A hubot script for interacting with the kubernetes where Hubot is running",
+  "version": "0.0.6",
+  "author": "Dale Lane <email@dalelane.co.uk>",
   "license": "MIT",
   "keywords": [
     "hubot",
@@ -12,20 +12,20 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:kevinschmidt/hubot-k8s.git"
+    "url": "git@github.com:dalelane/hubot-k8s.git"
   },
   "bugs": {
     "url": "https://github.com/kevinschmidt/hubot-k8s/issues"
   },
   "dependencies": {
     "coffee-script": "^1.10.0",
-    "moment": "^2.23.0",
+    "moment": "^2.29.1",
     "request": "^2.88.0"
   },
   "main": "index.coffee",
   "scripts": {
     "test": "script/test"
   },
-  "homepage": "https://github.com/kevinschmidt/hubot-k8s",
+  "homepage": "https://github.com/dalelane/hubot-k8s",
   "devDependencies": {}
 }

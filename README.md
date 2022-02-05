@@ -1,22 +1,17 @@
 # Hubot Kubernetes Bot
-Let's you connect to multiple kubernetes environments and interact with them.
+Hubot bot that communicates with the Kubernetes environment where the bot is running.
 
-Thanks to https://github.com/canthefason/hubot-kubernetes for the inspiration.
+Uses config mounted in the Hubot pod as described in https://kubernetes.io/docs/tasks/run-application/access-api-from-pod/#directly-accessing-the-rest-api
+
+To allow Hubot to access resources in other namespaces, run the Hubot pod with a service account that has permission to do that.
 
 ### Configuration:
-- `HUBOT_K8S_CONTEXTS` `{"prod":{"server":"https://kubernetes.cluster.io","ca":"./ca.crt","dashboardPrefix":"https://kubernetes.cluster.io","token":"<kubernetes token>"}}`
-- `HUBOT_K8S_DEFAULT_CONTEXT` - Default context (from above config)
 - `HUBOT_K8S_DEFAULT_NAMESPACE` - Default namespace in Kubernetes
+- `HUBOT_K8S_CONSOLE` - URL of the web console
 
 ### Commands:
 
 All commands operate in the currently selected namespace and context. All commands with label selectors accept it in the form `label=value`.
-
-#### Display Current Kubernetes Context
-> k8s context
-
-#### Switching Kubernetes Context
-> k8s context `<context>`
 
 #### Display Current Kubernetes Namespace
 > k8s namespace|ns

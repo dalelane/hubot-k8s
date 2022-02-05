@@ -1,14 +1,12 @@
 class KubeApi
   request = require 'request'
+  fs = require 'fs'
+  path = require 'path'
 
-  constructor: (contextConfig) ->
-    caFile = contextConfig['ca']
-    if caFile and caFile != ""
-      fs = require('fs')
-      path = require('path')
-      @ca = fs.readFileSync(caFile)
-    @urlPrefix = contextConfig['server']
-    @token = contextConfig['token']
+  constructor: () ->
+    @urlPrefix = 'https://kubernetes.default:443'
+    @ca = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt')
+    @token = fs.readFileSync('/var/run/secrets/kubernetes.io/serviceaccount/token')
 
   get: ({path, roles}, callback) ->
     requestOptions =
