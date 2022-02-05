@@ -1,7 +1,7 @@
 {
   "name": "hubot-k8s-local",
   "description": "A hubot script for interacting with the kubernetes where Hubot is running",
-  "version": "0.0.6",
+  "version": "0.0.11",
   "author": "Dale Lane <email@dalelane.co.uk>",
   "license": "MIT",
   "keywords": [

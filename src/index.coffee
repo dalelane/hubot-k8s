@@ -2,16 +2,16 @@
 #   Lets you interact with kubernetes
 #
 # Commands:
-#   hubot k8s context - Diplay current Kubernetes context
-#   hubot k8s context <context> - Change Kubernetes context
 #   hubot k8s namespace - Diplay current Kubernetes namespace
 #   hubot k8s namespace <namespace> - Change Kubernetes namespace
 #   hubot k8s deployments - List Kubernetes deployments in current namespace
+#   hubot k8s statefulsets - List Kubernetes deployments in current namespace
 #   hubot k8s pods - List Kubernetes pods in current namespace
 #   hubot k8s services - List Kubernetes services in current namespace
 #   hubot k8s cronjobs - List Kubernetes cronjobs in current namespace
 #   hubot k8s jobs - List Kubernetes jobs in current namespace
 #   hubot k8s logs <pod name> - Return log of the named pod in current namespace
+#   hubot k8s delete pod <pod name> - delete the named pod in current namespace
 
 Config = require "./config"
 KubeApi = require "./kubeapi"
@@ -24,6 +24,17 @@ module.exports = (@robot) ->
       return res.reply "Your current kubernetes namespace is: `#{Config.getNamespace(res)}`"
     Config.setNamespace res, namespace
     res.reply "Your current kubernetes namespace is changed to `#{namespace}`"
+
+  robot.respond /k8s\s*delete\s*pod\s*(.+)?/i, (res) ->
+    namespace = Config.getNamespace(res)
+    resource = res.match[1]
+    url = "/api/v1/namespaces/#{namespace}/pods/#{resource}"
+    kubeapi = new KubeApi()
+    kubeapi.del {path: url}, (err, response) ->
+      if err
+        robot.logger.error err
+        return res.send "Could not delete *#{resource}* in namespace *#{namespace}*"
+      return res.reply "Deleted *#{resource}* in namespace *#{namespace}*"
 
   robot.respond /k8s\s*(deployments|deploy|statefulsets|sts|pods|po|services|svc|cronjobs|jobs)\s*(.+)?/i, (res) ->
     namespace = Config.getNamespace(res)
@@ -58,6 +69,6 @@ module.exports = (@robot) ->
         return res.send "Could not fetch logs for pod *#{pod}* in namespace *#{namespace}*"
       return res.reply "Requested *logs* not found for pod *#{pod}* in namespace *#{namespace}*" unless response
       reply = "Here are latest logs from pod *#{pod}* in namespace *#{namespace}*\n"
-      reply += "```#{response}```\n"
+      reply += "#{response}\n"
 
       res.reply reply
