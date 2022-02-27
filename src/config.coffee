@@ -37,7 +37,7 @@ class Config
       for event in response.items
         {involvedObject: {name, kind, namespace}, reason, message, firstTimestamp, lastTimestamp, count, type} = event
         kind = kind.toLowerCase() + 's'
-        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/#{kind}/#{name}|#{name}> - "
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/#{kind}/#{name}/events|#{name}> - "
         reply += "`#{type}` event - #{moment(lastTimestamp).fromNow()}*\n"
         reply += "#{reason}\n#{message}\n"
       return reply
