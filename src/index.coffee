@@ -36,7 +36,7 @@ module.exports = (@robot) ->
         return res.send "Could not delete *#{resource}* in namespace *#{namespace}*"
       return res.reply "Deleted *#{resource}* in namespace *#{namespace}*"
 
-  robot.respond /k8s\s*(deployments|deploy|statefulsets|sts|pods|po|services|svc|cronjobs|jobs)\s*(.+)?/i, (res) ->
+  robot.respond /k8s\s*(deployments|deploy|statefulsets|sts|pods|po|services|svc|cronjobs|jobs|events)\s*(.+)?/i, (res) ->
     namespace = Config.getNamespace(res)
     resource = res.match[1]
     if alias = Config.resourceAliases[resource] then resource = alias
@@ -54,9 +54,12 @@ module.exports = (@robot) ->
     kubeapi = new KubeApi()
     kubeapi.get {path: url}, (err, response) ->
       if err
+        console.log(err)
         robot.logger.error url
         robot.logger.error err
         return res.send "Could not fetch *#{resource}* in namespace *#{namespace}*"
+      if resource == "events" and (!response or !response.items or response.items.length == 0)
+        return res.send "No events in namespace *#{namespace}*"
       return res.reply "Requested resource *#{resource}* with labelSelector *#{res.match[2]}* not found in namespace *#{namespace}*" unless response and response.items and response.items.length
       responseFormat = Config.responses[resource] or ->
       reply = "Here is the list of *#{resource}* running in namespace *#{namespace}*\n"

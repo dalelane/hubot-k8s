@@ -31,6 +31,15 @@ class Config
     return robot.brain.set(key, namespace or @defaultNamespace)
 
   @responses =
+    'events': (response, dashboardPrefix) ->
+      reply = ''
+      response.items.reverse()
+      for event in response.items
+        {involvedObject: {name, kind, namespace}, reason, message, firstTimestamp, lastTimestamp, count, type} = event
+        reply += ">*<#{dashboardPrefix}/k8s/ns/#{namespace}/#{kind}/#{name}|#{name}> - "
+        reply += "`#{type}` event - #{moment(lastTimestamp).fromNow()}*\n"
+        reply += "#{reason}\n#{message}\n"
+      return reply
     'cronjobs': (response, dashboardPrefix) ->
       reply = ''
       for cronjob in response.items
